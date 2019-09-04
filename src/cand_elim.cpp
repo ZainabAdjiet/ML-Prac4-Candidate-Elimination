@@ -28,29 +28,50 @@ void hypothesis::add_attribute_value(int index, std::string value) {
     str_vect attr = attributes[index];
     auto it = std::find(attr.begin(), attr.end(), value);
     if (it == attr.end())   attributes[index].push_back(value);
-    std::cout << value << " " << attributes[index].size() << std::endl;
+}
+
+std::string hypothesis::get_diff_attribute(int index, std::string value) {
+    for (int i = 0; i < num_attributes; ++i) {
+        if (attributes[index][i] != value)  return attributes[index][i];
+    }
+    return "?";
 }
 
 bool hypothesis::matches(hypothesis other) {
-    for (int i = 0; i < hypo.size(); ++i) {
+    for (int i = 0; i < num_attributes; ++i) {
         if (hypo[i] != other.hypo[i] && hypo[i] != "?")    return false;
     }
     return true;
 }
 
-// str_vect cand_elim::generalise(const str_vect & s, const str_vect & d) {
-//     str_vect new_s = s;
-//     for (int j = 0; j < s.size(); ++j) {
-//         // if there is a difference between elements
-//         if (d[j] != s[j]) {
-//             if (s[j] == "{}")  // if element is null set, take on value in instance
-//                 s[j] = d[j];
-//             else if (s[j] != "?")  // if element differs and is not most general, make most general
-//                 s[j] = "?";
-//         }
-//     }
-//     return new_s;
-// }
+str_vect hypothesis::min_generalise(const str_vect & d) {
+    str_vect new_s = hypo;
+    for (int i = 0; i < num_attributes; ++i) {
+        // if there is a difference between elements
+        if (d[i] != new_s[i]) {
+            if (new_s[i] == "{}")  // if element is null set, take on value in instance
+                new_s[i] = d[i];
+            else if (new_s[i] != "?")  // if element differs and is not most general, make most general
+                new_s[i] = "?";
+        }
+    }
+    return new_s;
+}
+
+std::vector<str_vect> hypothesis::min_specialise(const str_vect & d) {
+    std::vector<str_vect> min_gs;
+    str_vect new_g;
+    int last_spec = -1;
+    for (int i = 0; i < num_attributes; ++i) {
+        if (hypo[i] == "?" && i != last_spec) {
+            new_g = hypo;
+            new_g[i] = get_diff_attribute(i, d[i]);
+            last_spec = i;
+            min_gs.push_back(new_g);
+        }
+    }
+    return min_gs;
+}
 
 // bool cand_elim::more_general(const str_vect & h1, const str_vect & h2) {
 //     int count1 = std::count(h1.begin(), h1.end(), "?");

@@ -26,7 +26,10 @@ namespace cand_elim {
         hypothesis(str_vect & h);
         static void set_num_attributes(int num);
         static void add_attribute_value(int index, std::string value);
+        static std::string get_diff_attribute(int index, std::string value);
         bool matches(hypothesis other);
+        str_vect min_generalise(const str_vect & d);
+        std::vector<str_vect> min_specialise(const str_vect & d);
     };
     
     struct training_element {
@@ -38,8 +41,6 @@ namespace cand_elim {
     const int num_attributes = 5;
 
     void load_training_set(std::string filename);
-    //void positive_example(const str_vect & d);
-    //void negative_example(const str_vect & d);
     std::ostream & operator<<(std::ostream & os, const str_vect & d);
     std::ostream & operator<<(std::ostream & os, const training_element & element);
 }

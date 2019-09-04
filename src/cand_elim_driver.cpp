@@ -56,14 +56,25 @@ int main(int argc, char const *argv[]) {
         string filename = string(argv[1]);
         load_training_set(filename);
 
-        for (int i = 0; i < training_set.size(); ++i) {
-            cout << training_set[i] << endl;
-        }
+        str_vect g(num_attributes, "?");
+        str_vect s(num_attributes, "{}");
 
-        cout << endl;
+        hypothesis h_g(g);
+        hypothesis h_s(s);
 
-        for (int j = 0; j < hypothesis::attributes.size(); ++j) {
-            cout << hypothesis::attributes[j] << endl;
+        for (int i = 0; i < 2; ++i) {
+            if (training_set[i].result) {
+                str_vect new_s = h_s.min_generalise(training_set[i].instance);
+                
+                cout << "new s: " << new_s << endl;
+            }
+            else {
+                vector<str_vect> new_g = h_g.min_specialise(training_set[i].instance);
+
+                for (int j = 0; j < new_g.size(); ++j) {
+                    cout << "new g: " << new_g[j] << endl;
+                }
+            }
         }
 
         // ofstream out_file("output.txt");
