@@ -37,14 +37,27 @@ std::string hypothesis::get_diff_attribute(int index, std::string value) {
     return "?";
 }
 
-bool hypothesis::matches(hypothesis other) {
+bool hypothesis::operator==(hypothesis & other) {
     for (int i = 0; i < num_attributes; ++i) {
-        if (hypo[i] != other.hypo[i] && hypo[i] != "?")    return false;
+        if (hypo[i] != other.hypo[i] && hypo[i] != "?" && other.hypo[i] != "?")
+            return false;
     }
     return true;
 }
 
-str_vect hypothesis::min_generalise(const str_vect & d) {
+bool hypothesis::operator>(hypothesis & other) {
+    int thisCount = std::count(hypo.begin(), hypo.end(), "?");
+    int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
+    return thisCount > otherCount;
+}
+
+bool hypothesis::operator<(hypothesis & other) {
+    int thisCount = std::count(hypo.begin(), hypo.end(), "?");
+    int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
+    return thisCount < otherCount;
+}
+
+hypothesis hypothesis::min_generalise(const str_vect & d) {
     str_vect new_s = hypo;
     for (int i = 0; i < num_attributes; ++i) {
         // if there is a difference between elements
@@ -55,11 +68,11 @@ str_vect hypothesis::min_generalise(const str_vect & d) {
                 new_s[i] = "?";
         }
     }
-    return new_s;
+    return hypothesis(new_s);
 }
 
-std::vector<str_vect> hypothesis::min_specialise(const str_vect & d) {
-    std::vector<str_vect> min_gs;
+std::vector<hypothesis> hypothesis::min_specialise(const str_vect & d) {
+    std::vector<hypothesis> min_gs;
     str_vect new_g;
     int last_spec = -1;
     for (int i = 0; i < num_attributes; ++i) {
@@ -67,7 +80,7 @@ std::vector<str_vect> hypothesis::min_specialise(const str_vect & d) {
             new_g = hypo;
             new_g[i] = get_diff_attribute(i, d[i]);
             last_spec = i;
-            min_gs.push_back(new_g);
+            min_gs.push_back( hypothesis(new_g) );
         }
     }
     return min_gs;
@@ -126,6 +139,12 @@ std::ostream & cand_elim::operator<<(std::ostream & os, const str_vect & d) {
         os << d[i] << ", ";
     }
     os << d[i] << " >";
+    return os;
+}
+
+// displays training instance attributes and hypothesis as a vector between '<' and '>'
+std::ostream & cand_elim::operator<<(std::ostream & os, const hypothesis & h) {
+    os << h.hypo;
     return os;
 }
 

@@ -61,18 +61,21 @@ int main(int argc, char const *argv[]) {
 
         hypothesis h_g(g);
         hypothesis h_s(s);
+        hypothesis new_s(s);
 
         for (int i = 0; i < 2; ++i) {
             if (training_set[i].result) {
-                str_vect new_s = h_s.min_generalise(training_set[i].instance);
+                new_s = h_s.min_generalise(training_set[i].instance);
                 
-                cout << "new s: " << new_s << endl;
+                if (new_s == h_g && new_s < h_g)
+                    cout << "new s: " << new_s << endl;
             }
             else {
-                vector<str_vect> new_g = h_g.min_specialise(training_set[i].instance);
+                vector<hypothesis> new_g = h_g.min_specialise(training_set[i].instance);
 
                 for (int j = 0; j < new_g.size(); ++j) {
-                    cout << "new g: " << new_g[j] << endl;
+                    if (new_g[j] == new_s && new_g[i] > new_s)
+                        cout << "new g: " << new_g[j] << endl;
                 }
             }
         }
