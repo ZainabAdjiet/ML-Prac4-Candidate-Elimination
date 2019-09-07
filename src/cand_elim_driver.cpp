@@ -46,6 +46,48 @@ void cand_elim::load_training_set(std::string filename) {
     }
 }
 
+bool cand_elim::valid_s(hypothesis & s) {
+    for (int i = 0; i < G.size(); ++i) {
+        if (!(s % G[i]) && s > G[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void cand_elim::positive_example(const str_vect & d) {
+    hypothesis h(d);
+    for (hypothesis g : G) {
+        if (!(g % h)) {
+            auto it = std::find(G.begin(), G.end(), g);
+            G.erase(it);
+        }
+    }
+
+    for (hypothesis s : S) {
+        if (!(s % h)) {
+            auto it = std::find(S.begin(), S.end(), s);
+            S.erase(it);
+
+            hypothesis new_s = s.min_generalise(d);
+            if (valid_s(new_s)) {
+                S.push_back(new_s);
+            }
+        }
+    }
+
+    int j = 0;
+    for (hypothesis s : S) {
+        for (int k = j+1; k < S.size(); ++k) {
+            if (s % S[k] && s > S[k]) {
+                auto it = std::find(S.begin(), S.end(), s);
+                S.erase(it);
+            }
+        }
+        ++j;
+    }
+}
+
 /****************************************************************/
 /* Main candidate elimination program
 /****************************************************************/
@@ -59,26 +101,17 @@ int main(int argc, char const *argv[]) {
         str_vect g(num_attributes, "?");
         str_vect s(num_attributes, "{}");
 
-        hypothesis h_g(g);
-        hypothesis h_s(s);
-        hypothesis new_s(s);
+        S.push_back(s);
+        G.push_back(g);
 
         for (int i = 0; i < 2; ++i) {
             if (training_set[i].result) {
-                new_s = h_s.min_generalise(training_set[i].instance);
-                
-                if (new_s == h_g && new_s < h_g)
-                    cout << "new s: " << new_s << endl;
-            }
-            else {
-                vector<hypothesis> new_g = h_g.min_specialise(training_set[i].instance);
-
-                for (int j = 0; j < new_g.size(); ++j) {
-                    if (new_g[j] == new_s && new_g[i] > new_s)
-                        cout << "new g: " << new_g[j] << endl;
-                }
+                positive_example(training_set[i].instance);
             }
         }
+
+        cout << S << endl;
+        cout << G << endl;
 
         // ofstream out_file("output.txt");
         // if (out_file.is_open()) {

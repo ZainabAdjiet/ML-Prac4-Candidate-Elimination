@@ -17,7 +17,7 @@ training_element::training_element(str_vect & in, bool res) :
 /* hypothesis methods
 /****************************************************************/
 
-hypothesis::hypothesis(str_vect & h) :
+hypothesis::hypothesis(const str_vect & h) :
     hypo(h) {}
 
 void hypothesis::set_num_attributes(int num) {
@@ -37,7 +37,11 @@ std::string hypothesis::get_diff_attribute(int index, std::string value) {
     return "?";
 }
 
-bool hypothesis::operator==(hypothesis & other) {
+bool hypothesis::operator==(const hypothesis & other) {
+    return hypo == other.hypo;
+}
+
+bool hypothesis::operator%(const hypothesis & other) {
     for (int i = 0; i < num_attributes; ++i) {
         if (hypo[i] != other.hypo[i] && hypo[i] != "?" && other.hypo[i] != "?")
             return false;
@@ -45,13 +49,13 @@ bool hypothesis::operator==(hypothesis & other) {
     return true;
 }
 
-bool hypothesis::operator>(hypothesis & other) {
+bool hypothesis::operator>(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
     return thisCount > otherCount;
 }
 
-bool hypothesis::operator<(hypothesis & other) {
+bool hypothesis::operator<(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
     return thisCount < otherCount;
@@ -145,6 +149,14 @@ std::ostream & cand_elim::operator<<(std::ostream & os, const str_vect & d) {
 // displays training instance attributes and hypothesis as a vector between '<' and '>'
 std::ostream & cand_elim::operator<<(std::ostream & os, const hypothesis & h) {
     os << h.hypo;
+    return os;
+}
+
+// displays training instance attributes and hypothesis as a vector between '<' and '>'
+std::ostream & cand_elim::operator<<(std::ostream & os, const std::vector<hypothesis> & h_vect) {
+    for (int i = 0; i < h_vect.size(); ++i) {
+        os << h_vect[i] << std::endl;
+    }
     return os;
 }
 

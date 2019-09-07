@@ -23,13 +23,14 @@ namespace cand_elim {
     struct hypothesis {
         str_vect hypo;
         static std::vector<str_vect> attributes;
-        hypothesis(str_vect & h);
+        hypothesis(const str_vect & h);
         static void set_num_attributes(int num);
         static void add_attribute_value(int index, std::string value);
         static std::string get_diff_attribute(int index, std::string value);
-        bool operator==(hypothesis & other);
-        bool operator>(hypothesis & other);
-        bool operator<(hypothesis & other);
+        bool operator==(const hypothesis & other);
+        bool operator%(const hypothesis & other);
+        bool operator>(const hypothesis & other);
+        bool operator<(const hypothesis & other);
         hypothesis min_generalise(const str_vect & d);
         std::vector<hypothesis> min_specialise(const str_vect & d);
     };
@@ -43,8 +44,13 @@ namespace cand_elim {
     const int num_attributes = 5;
 
     void load_training_set(std::string filename);
+    bool valid_s(hypothesis & s);
+    bool valid_g(const hypothesis & g);
+    void positive_example(const str_vect & d);
+    void negative_example(const str_vect & d);
     std::ostream & operator<<(std::ostream & os, const str_vect & d);
     std::ostream & operator<<(std::ostream & os, const hypothesis & h);
+    std::ostream & operator<<(std::ostream & os, const std::vector<hypothesis> & h_vect);
     std::ostream & operator<<(std::ostream & os, const training_element & element);
 }
 
