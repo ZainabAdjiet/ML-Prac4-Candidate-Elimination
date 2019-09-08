@@ -20,16 +20,19 @@ training_element::training_element(str_vect & in, bool res) :
 hypothesis::hypothesis(const str_vect & h) :
     hypo(h) {}
 
+// sets the number of attributes for hypotheses
 void hypothesis::set_num_attributes(int num) {
     attributes.resize(num);
 }
 
+// adds valid value for the indexed attribute if it doesnt already exist
 void hypothesis::add_attribute_value(int index, std::string value) {
     str_vect attr = attributes[index];
     auto it = std::find(attr.begin(), attr.end(), value);
     if (it == attr.end())   attributes[index].push_back(value);
 }
 
+// returns different attribute for constructing hypotheses that don't match training instance
 std::string hypothesis::get_diff_attribute(int index, std::string value) {
     for (int i = 0; i < num_attributes; ++i) {
         if (attributes[index][i] != value)  return attributes[index][i];
@@ -37,10 +40,12 @@ std::string hypothesis::get_diff_attribute(int index, std::string value) {
     return "?";
 }
 
+// check if hypotheses are equal (have exact same attribute values)
 bool hypothesis::operator==(const hypothesis & other) {
     return hypo == other.hypo;
 }
 
+// check if instance matches hypothesis
 bool hypothesis::operator%(const str_vect & other) {
     for (int i = 0; i < num_attributes; ++i) {
         if (hypo[i] != other[i] && hypo[i] != "?" && other[i] != "?")
@@ -49,6 +54,8 @@ bool hypothesis::operator%(const str_vect & other) {
     return true;
 }
 
+// check if hypothesis matches another
+// used for detecting if one is a more specific/general version of the other
 bool hypothesis::operator%(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
@@ -63,18 +70,21 @@ bool hypothesis::operator%(const hypothesis & other) {
     return matchingCols >= neededCols;
 }
 
+// check if this hypothesis is more general than the other
 bool hypothesis::operator>(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
     return *this % other && thisCount > otherCount;
 }
 
+// check if this hypothesis is more specific than the other
 bool hypothesis::operator<(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
     return *this % other && thisCount < otherCount;
 }
 
+// check if this hypothesis is more or equally general compared to the other
 bool hypothesis::operator>=(const hypothesis & other) {
     if (*this == other)
         return true;
@@ -82,6 +92,7 @@ bool hypothesis::operator>=(const hypothesis & other) {
         return *this > other;
 }
 
+// check if this hypothesis is more or equally specific compared to the other
 bool hypothesis::operator<=(const hypothesis & other) {
     if (*this == other)
         return true;
@@ -89,6 +100,7 @@ bool hypothesis::operator<=(const hypothesis & other) {
         return *this < other;
 }
 
+// generate minimal generalisations of a hypothesis
 hypothesis hypothesis::min_generalise(const str_vect & d) {
     str_vect new_s = hypo;
     for (int i = 0; i < num_attributes; ++i) {
@@ -103,11 +115,14 @@ hypothesis hypothesis::min_generalise(const str_vect & d) {
     return hypothesis(new_s);
 }
 
+// generate minimal specialisations of a hypothesis
 std::vector<hypothesis> hypothesis::min_specialise(const str_vect & d) {
     std::vector<hypothesis> min_gs;
     str_vect new_g;
-    int last_spec = -1;
+    int last_spec = -1; // index of last attribute that was specialised for this hypothesis
     for (int i = 0; i < num_attributes; ++i) {
+        // for each '?' attribute in hypothesis,
+        // make new hypothesis with this attribute specialised to not match d, since its a negative example
         if (hypo[i] == "?" && i != last_spec) {
             new_g = hypo;
             new_g[i] = get_diff_attribute(i, d[i]);
@@ -118,52 +133,11 @@ std::vector<hypothesis> hypothesis::min_specialise(const str_vect & d) {
     return min_gs;
 }
 
-// bool cand_elim::more_general(const str_vect & h1, const str_vect & h2) {
-//     int count1 = std::count(h1.begin(), h1.end(), "?");
-//     int count2 = std::count(h2.begin(), h2.end(), "?");
-//     return count1 > count2;
-// }
-
-// void cand_elim::positive_example(std::vector<str_vect> & s, std::vector<str_vect> & g, const str_vect & d) {
-//     for (str_vect hypo : g) {
-//         if (!is_match(hypo, d)) {
-//             auto it = std::find(g.begin(), g.end(), hypo);
-//             g.erase(it);
-//         }
-//     }
-
-//     for (str_vect hypo : s) {
-//         if (!is_match(hypo, d)) {
-//             auto it = std::find(g.begin(), g.end(), hypo);
-//             g.erase(it);
-
-//             str_vect new_s = generalise(hypo, d);
-            
-//         }
-//     }
-// }
-
-// // adjusts hypothesis by comparing its elements with given training instance
-// void cand_elim::adjust_S(std::vector<hypothesis> & s, const training_element & element) {
-//     // only use positive instances
-//     if (element.result) {
-//         for (int j = 0; j < hypothesis.size(); ++j) {
-//             // if there is a difference between elements
-//             if (element.instance[j] != hypothesis[j]) {
-//                 if (hypothesis[j] == "{}")  // if element is null set, take on value in instance
-//                     hypothesis[j] = element.instance[j];
-//                 else if (hypothesis[j] != "?")  // if element differs and is not most general, make most general
-//                     hypothesis[j] = "?";
-//             }
-//         }
-//     }
-// }
-
 /****************************************************************/
 /* Stream operators
 /****************************************************************/
 
-// displays training instance attributes and hypothesis as a vector between '<' and '>'
+// displays training instance attributes as a vector between '<' and '>'
 std::ostream & cand_elim::operator<<(std::ostream & os, const str_vect & d) {
     os << "< ";
     int n = 0;
@@ -173,13 +147,13 @@ std::ostream & cand_elim::operator<<(std::ostream & os, const str_vect & d) {
     return os;
 }
 
-// displays training instance attributes and hypothesis as a vector between '<' and '>'
+// displays hypothesis as a vector between '<' and '>'
 std::ostream & cand_elim::operator<<(std::ostream & os, const hypothesis & h) {
     os << h.hypo;
     return os;
 }
 
-// displays training instance attributes and hypothesis as a vector between '<' and '>'
+// displays list of hypotheses as a set between '{' and '}'
 std::ostream & cand_elim::operator<<(std::ostream & os, const std::vector<hypothesis> & h_vect) {
     os << "{ ";
     int n = 0;

@@ -30,12 +30,14 @@ void cand_elim::load_training_set(std::string filename) {
             bool result;
 
             std::istringstream temp(line);
+            // add each attribute value to instance and add value to list of hypothesis attribute values
             for (int i = 0; i < num_attributes; ++i) {
                 temp >> val;
                 instance[i] = val;
                 hypothesis::add_attribute_value(i, val);
             }
 
+            // get example type
             temp >> val;
             if (val == "P")   result = true;
             else              result = false;
@@ -46,6 +48,8 @@ void cand_elim::load_training_set(std::string filename) {
     }
 }
 
+// if equal is true, returns if s is more or equally as specific as all hypotheses in G
+// else, returns if s is more specific than all hypotheses in G
 bool cand_elim::more_spec_than_G(hypothesis & s, bool equal) {
     for (int i = 0; i < G.size(); ++i) {
         if (equal && s <= G[i]) {
@@ -58,6 +62,8 @@ bool cand_elim::more_spec_than_G(hypothesis & s, bool equal) {
     return false;
 }
 
+// if equal is true, returns if g is more or equally as general as all hypotheses in S
+// else, returns if g is more general than all hypotheses in S
 bool cand_elim::more_gen_than_S(hypothesis & g, bool equal) {
     for (int i = 0; i < S.size(); ++i) {
         if (equal && g >= S[i]) {
@@ -70,8 +76,11 @@ bool cand_elim::more_gen_than_S(hypothesis & g, bool equal) {
     return false;
 }
 
+// algorithm for positive training example
 void cand_elim::positive_example(const str_vect & d) {
-    vector<hypothesis> temp;
+    vector<hypothesis> temp; // used to add back hypotheses that shouldn't be removed
+
+    // add back hypotheses in G that do match d
     for (int i = 0; i < G.size(); ++i)
         if (G[i] % d)   temp.push_back(G[i]);
 
@@ -79,6 +88,8 @@ void cand_elim::positive_example(const str_vect & d) {
     G.insert(G.begin(), temp.begin(), temp.end());
     temp.clear();
 
+    // add hypotheses in S that do match
+    // otherwise, add minimal generalisations that match and are more specific than some hypothesis in G
     for (int i = 0; i < S.size(); ++i) {
         if (S[i] % d)   temp.push_back(S[i]);
         else {
@@ -91,6 +102,8 @@ void cand_elim::positive_example(const str_vect & d) {
     S.insert(S.begin(), temp.begin(), temp.end());
     temp.clear();
 
+    // remove hypotheses in S that are more general than any other in S
+    // add back hypotheses that are less or equally as general as any other in S
     for (int i = 0; i < S.size(); ++i) {
         if (!more_gen_than_S(S[i], false))     temp.push_back(S[i]);
     }
@@ -101,7 +114,9 @@ void cand_elim::positive_example(const str_vect & d) {
 }
 
 void cand_elim::negative_example(const str_vect & d) {
-    vector<hypothesis> temp;
+    vector<hypothesis> temp; // used to add back hypotheses that shouldn't be removed
+
+    // add back hypotheses in S that dont match d
     for (int i = 0; i < S.size(); ++i)
         if (!(S[i] % d))   temp.push_back(S[i]);
 
@@ -109,6 +124,8 @@ void cand_elim::negative_example(const str_vect & d) {
     S.insert(S.begin(), temp.begin(), temp.end());
     temp.clear();
 
+    // add hypotheses in G that dont match
+    // otherwise, add minimal specialisations that match and are more general than some hypothesis in S
     for (int i = 0; i < G.size(); ++i) {
         if (!(G[i] % d))    temp.push_back(G[i]);
         else {
@@ -123,6 +140,8 @@ void cand_elim::negative_example(const str_vect & d) {
     G.insert(G.begin(), temp.begin(), temp.end());
     temp.clear();
 
+    // remove hypotheses in G that are more specific than any other in G
+    // add back hypotheses that are less or equally as specific as any other in G
     for (int i = 0; i < G.size(); ++i)
         if (!more_spec_than_G(G[i], false))    temp.push_back(G[i]);
 
@@ -137,75 +156,49 @@ void cand_elim::negative_example(const str_vect & d) {
 
 int main(int argc, char const *argv[]) {
 
-    if (argc > 1) {
+    if (argc > 2) {
         string filename = string(argv[1]);
+        string outfile = string(argv[2]);
         load_training_set(filename);
 
+        // populate S and G with most specific and most general hypotheses respectively
         str_vect g(num_attributes, "?");
         str_vect s(num_attributes, "{}");
 
         S.push_back(s);
         G.push_back(g);
+        
+        ofstream out_file(outfile);
+        if (out_file.is_open()) {
+            // print initial setup
+            out_file << "Initial setup:" << endl;
+            out_file << "G = " << G << endl;
+            out_file << "S = " << S << endl;
+            out_file << endl;
 
-        cout << "Initial setup:" << endl;
-        cout << "G = " << G << endl;
-        cout << "S = " << S << endl;
-        cout << endl;
+            // iterate over training data and stop when S = G and both are singleton sets
+            for (int i = 0; i < training_set.size(); ++i) {
+                out_file << "Iteration " << i+1 << ": " << training_set[i] << endl << endl;
+                if (training_set[i].result)
+                    positive_example(training_set[i].instance);
+                else 
+                    negative_example(training_set[i].instance);
 
-        for (int i = 0; i < training_set.size(); ++i) {
-            cout << "Iteration " << i+1 << ": " << training_set[i] << endl << endl;
-            if (training_set[i].result)
-                positive_example(training_set[i].instance);
-            else 
-                negative_example(training_set[i].instance);
+                out_file << "G = " << G << endl;
+                out_file << "S = " << S << endl;
+                out_file << endl;
 
-            cout << "G = " << G << endl;
-            cout << "S = " << S << endl;
-            cout << endl;
+                if (G.size() == 1 && S.size() == 1 && G[0] == S[0]) {
+                    out_file << "Candidate elimination algorithm learnt hypothesis: " << G[0] << endl;
+                    out_file << "after " << i+1 << " training examples";
+                    break;
+                }
+            }
+            return 0;
         }
-
-        // ofstream out_file("output.txt");
-        // if (out_file.is_open()) {
-
-        //     // start with most specific hypothesis
-        //     // '{}' used as symbol for null set
-        //     vector<string> hypothesis = { "{}", "{}", "{}", "{}", "{}", "{}" };
-        //     out_file << "Starting hypothesis: " << hypothesis << endl;
-
-        //     out_file << endl << "Example training set:" << endl;
-
-        //     int i = 0;
-        //     for (; i < 4; ++i) { // iterate over example training instances
-        //         out_file << endl;
-        //         out_file << "Training instance: " << training_set[i] << endl;
-
-        //         adjust_hypothesis(hypothesis, training_set[i]);
-        //         out_file << "Adjusted hypothesis: " << hypothesis << endl;
-        //     }
-
-        //     out_file << endl << "Additional training instances:" << endl;
-
-        //     for (; i < training_set.size(); ++i) {  // iterate over extra training instances to get target concept
-        //         out_file << endl;
-        //         out_file << "Training instance: " << training_set[i] << endl;
-
-        //         adjust_hypothesis(hypothesis, training_set[i]);
-        //         out_file << "Adjusted hypothesis: " << hypothesis << endl;
-        //     }
-
-        //     out_file << endl << "Target concept learnt with " << i-4 << " additional instance(s)" << endl;
-
-        //     out_file.close();
-        //     cout << "output written to 'output.txt'" << endl;
-        // }
-        // else {
-        //     cout << "could not write to 'output.txt'" << endl;
-        //     return 1;
-        // }
-        return 0;
     }
     else {
-        cout << "no input file name specified" << endl;
+        cout << "input file name or output file name not specified" << endl;
         return 1;
     }
     

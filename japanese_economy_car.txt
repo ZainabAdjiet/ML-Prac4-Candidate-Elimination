@@ -1,0 +1,36 @@
+Initial setup:
+G = { < ?, ?, ?, ?, ? > }
+S = { < {}, {}, {}, {}, {} > }
+
+Iteration 1: < < Japan, Honda, Blue, 1980, Economy >, 1 >
+
+G = { < ?, ?, ?, ?, ? > }
+S = { < Japan, Honda, Blue, 1980, Economy > }
+
+Iteration 2: < < Japan, Toyota, Green, 1970, Sports >, 0 >
+
+G = { < ?, Honda, ?, ?, ? >,
+< ?, ?, Blue, ?, ? >,
+< ?, ?, ?, 1980, ? >,
+< ?, ?, ?, ?, Economy > }
+S = { < Japan, Honda, Blue, 1980, Economy > }
+
+Iteration 3: < < Japan, Toyota, Blue, 1990, Economy >, 1 >
+
+G = { < ?, ?, Blue, ?, ? >,
+< ?, ?, ?, ?, Economy > }
+S = { < Japan, ?, Blue, ?, Economy > }
+
+Iteration 4: < < USA, Chrysler, Red, 1980, Economy >, 0 >
+
+G = { < ?, ?, Blue, ?, ? >,
+< Japan, ?, ?, ?, Economy > }
+S = { < Japan, ?, Blue, ?, Economy > }
+
+Iteration 5: < < Japan, Honda, White, 1980, Economy >, 1 >
+
+G = { < Japan, ?, ?, ?, Economy > }
+S = { < Japan, ?, ?, ?, Economy > }
+
+Candidate elimination algorithm learnt hypothesis: < Japan, ?, ?, ?, Economy >
+after 5 training examples
