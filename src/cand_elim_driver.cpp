@@ -46,18 +46,24 @@ void cand_elim::load_training_set(std::string filename) {
     }
 }
 
-bool cand_elim::more_spec_than_G(hypothesis & s) {
+bool cand_elim::more_spec_than_G(hypothesis & s, bool equal) {
     for (int i = 0; i < G.size(); ++i) {
-        if (!(s == G[i]) && s < G[i]) {
+        if (equal && s <= G[i]) {
+            return true;
+        }
+        else if (!equal && s < G[i]) {
             return true;
         }
     }
     return false;
 }
 
-bool cand_elim::more_gen_than_S(hypothesis & g) {
+bool cand_elim::more_gen_than_S(hypothesis & g, bool equal) {
     for (int i = 0; i < S.size(); ++i) {
-        if (!(g == S[i]) && g > S[i]) {
+        if (equal && g >= S[i]) {
+            return true;
+        }
+        else if (!equal && g > S[i]) {
             return true;
         }
     }
@@ -65,59 +71,64 @@ bool cand_elim::more_gen_than_S(hypothesis & g) {
 }
 
 void cand_elim::positive_example(const str_vect & d) {
-    for (hypothesis g : G) {
-        if (!(g % d)) {
-            auto it = std::find(G.begin(), G.end(), g);
-            G.erase(it);
+    vector<hypothesis> temp;
+    for (int i = 0; i < G.size(); ++i)
+        if (G[i] % d)   temp.push_back(G[i]);
+
+    G.clear();
+    G.insert(G.begin(), temp.begin(), temp.end());
+    temp.clear();
+
+    for (int i = 0; i < S.size(); ++i) {
+        if (S[i] % d)   temp.push_back(S[i]);
+        else {
+            hypothesis new_s = S[i].min_generalise(d);
+            if (new_s % d && more_spec_than_G(new_s, true))
+                temp.push_back(new_s);
         }
     }
+    S.clear();
+    S.insert(S.begin(), temp.begin(), temp.end());
+    temp.clear();
 
-    for (hypothesis s : S) {
-        if (!(s % d)) {
-            auto it = std::find(S.begin(), S.end(), s);
-            S.erase(it);
-
-            hypothesis new_s = s.min_generalise(d);
-            if (new_s % d && more_spec_than_G(new_s))
-                S.push_back(new_s);
-        }
+    for (int i = 0; i < S.size(); ++i) {
+        if (!more_gen_than_S(S[i], false))     temp.push_back(S[i]);
     }
-
-    for (hypothesis s : S) {
-        if (more_gen_than_S(s)) {
-            auto it = std::find(S.begin(), S.end(), s);
-            S.erase(it);
-        }
-    }
+    
+    S.clear();
+    S.insert(S.begin(), temp.begin(), temp.end());
+    temp.clear();
 }
 
 void cand_elim::negative_example(const str_vect & d) {
-    for (hypothesis s : S) {
-        if (s % d) {
-            auto it = std::find(S.begin(), S.end(), s);
-            S.erase(it);
-        }
-    }
+    vector<hypothesis> temp;
+    for (int i = 0; i < S.size(); ++i)
+        if (!(S[i] % d))   temp.push_back(S[i]);
 
-    for (hypothesis g : G) {
-        if (g % d) {
-            auto it = std::find(G.begin(), G.end(), g);
-            G.erase(it);
+    S.clear();
+    S.insert(S.begin(), temp.begin(), temp.end());
+    temp.clear();
 
-            vector<hypothesis> new_g = g.min_specialise(d);
-            for (int i = 0; i < new_g.size(); ++i) {
-                if (!(new_g[i] % d) && more_gen_than_S(new_g[i]))
-                    G.push_back(new_g[i]);
+    for (int i = 0; i < G.size(); ++i) {
+        if (!(G[i] % d))    temp.push_back(G[i]);
+        else {
+            vector<hypothesis> new_g = G[i].min_specialise(d);
+            for (int j = 0; j < new_g.size(); ++j) {
+                if (!(new_g[j] % d) && more_gen_than_S(new_g[j], true))
+                    temp.push_back(new_g[j]);
             }
         }
     }
+    G.clear();
+    G.insert(G.begin(), temp.begin(), temp.end());
+    temp.clear();
 
-    for (hypothesis g : G) {
-        if (more_spec_than_G(g)) {
-            auto it = std::find(G.begin(), G.end(), g);
-            G.erase(it);
-        }
-    }
+    for (int i = 0; i < G.size(); ++i)
+        if (!more_spec_than_G(G[i], false))    temp.push_back(G[i]);
+
+    G.clear();
+    G.insert(G.begin(), temp.begin(), temp.end());
+    temp.clear();
 }
 
 /****************************************************************/
@@ -136,15 +147,21 @@ int main(int argc, char const *argv[]) {
         S.push_back(s);
         G.push_back(g);
 
-        for (int i = 0; i < 2; ++i) {
-            cout << "iteration " << i << endl;
+        cout << "Initial setup:" << endl;
+        cout << "G = " << G << endl;
+        cout << "S = " << S << endl;
+        cout << endl;
+
+        for (int i = 0; i < training_set.size(); ++i) {
+            cout << "Iteration " << i+1 << ": " << training_set[i] << endl << endl;
             if (training_set[i].result)
                 positive_example(training_set[i].instance);
             else 
                 negative_example(training_set[i].instance);
 
-            cout << S << endl;
-            cout << G << endl;
+            cout << "G = " << G << endl;
+            cout << "S = " << S << endl;
+            cout << endl;
         }
 
         // ofstream out_file("output.txt");

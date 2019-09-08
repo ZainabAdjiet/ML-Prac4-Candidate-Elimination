@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cmath>
 
 /****************************************************************/
 /* Functions
@@ -29,8 +30,11 @@ namespace cand_elim {
         static std::string get_diff_attribute(int index, std::string value);
         bool operator==(const hypothesis & other);
         bool operator%(const str_vect & other);
+        bool operator%(const hypothesis & other);
         bool operator>(const hypothesis & other);
         bool operator<(const hypothesis & other);
+        bool operator>=(const hypothesis & other);
+        bool operator<=(const hypothesis & other);
         hypothesis min_generalise(const str_vect & d);
         std::vector<hypothesis> min_specialise(const str_vect & d);
     };
@@ -44,8 +48,8 @@ namespace cand_elim {
     const int num_attributes = 5;
 
     void load_training_set(std::string filename);
-    bool more_spec_than_G(hypothesis & s);
-    bool more_gen_than_S(hypothesis & g);
+    bool more_spec_than_G(hypothesis & s, bool equal);
+    bool more_gen_than_S(hypothesis & g, bool equal);
     void positive_example(const str_vect & d);
     void negative_example(const str_vect & d);
     std::ostream & operator<<(std::ostream & os, const str_vect & d);

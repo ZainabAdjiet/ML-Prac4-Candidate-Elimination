@@ -49,46 +49,44 @@ bool hypothesis::operator%(const str_vect & other) {
     return true;
 }
 
-bool hypothesis::operator>(const hypothesis & other) {
+bool hypothesis::operator%(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
 
-    if (thisCount == num_attributes || otherCount == num_attributes) {
-        return thisCount > otherCount;
+    int neededCols = num_attributes - std::max(thisCount, otherCount);
+    int matchingCols = 0;
+    for (int i = 0; i < num_attributes; ++i) {
+        if (hypo[i] != "?" || other.hypo[i] != "?")
+            if (hypo[i] == other.hypo[i])
+                ++matchingCols;
     }
-    else {
-        int matchingCols = 0;
-        for (int i = 0; i < num_attributes; ++i) {
-            if (hypo[i] != "?" && other.hypo[i] != "?") {
-                if (hypo[i] == other.hypo[i])
-                    ++matchingCols;
-                else
-                    return false;
-            }
-        }
-        return matchingCols > 0 && thisCount > otherCount;
-    }
+    return matchingCols >= neededCols;
+}
+
+bool hypothesis::operator>(const hypothesis & other) {
+    int thisCount = std::count(hypo.begin(), hypo.end(), "?");
+    int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
+    return *this % other && thisCount > otherCount;
 }
 
 bool hypothesis::operator<(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
+    return *this % other && thisCount < otherCount;
+}
 
-    if (thisCount == num_attributes || otherCount == num_attributes) {
-        return thisCount < otherCount;
-    }
-    else {
-        int matchingCols = 0;
-        for (int i = 0; i < num_attributes; ++i) {
-            if (hypo[i] != "?" && other.hypo[i] != "?") {
-                if (hypo[i] == other.hypo[i])
-                    ++matchingCols;
-                else
-                    return false;
-            }
-        }
-        return matchingCols > 0 && thisCount < otherCount;
-    }
+bool hypothesis::operator>=(const hypothesis & other) {
+    if (*this == other)
+        return true;
+    else
+        return *this > other;
+}
+
+bool hypothesis::operator<=(const hypothesis & other) {
+    if (*this == other)
+        return true;
+    else
+        return *this < other;
 }
 
 hypothesis hypothesis::min_generalise(const str_vect & d) {
@@ -168,11 +166,10 @@ std::vector<hypothesis> hypothesis::min_specialise(const str_vect & d) {
 // displays training instance attributes and hypothesis as a vector between '<' and '>'
 std::ostream & cand_elim::operator<<(std::ostream & os, const str_vect & d) {
     os << "< ";
-    int i = 0;
-    for (; i < d.size() - 1; ++i) {
-        os << d[i] << ", ";
-    }
-    os << d[i] << " >";
+    int n = 0;
+    for (; n < d.size() - 1; ++n)
+        os << d[n] << ", ";
+    os << d[n] << " >";
     return os;
 }
 
@@ -184,9 +181,14 @@ std::ostream & cand_elim::operator<<(std::ostream & os, const hypothesis & h) {
 
 // displays training instance attributes and hypothesis as a vector between '<' and '>'
 std::ostream & cand_elim::operator<<(std::ostream & os, const std::vector<hypothesis> & h_vect) {
-    for (int i = 0; i < h_vect.size(); ++i) {
-        os << h_vect[i] << std::endl;
+    os << "{ ";
+    int n = 0;
+    if (h_vect.size() > 0) {
+        for (; n < h_vect.size() - 1; ++n)
+            os << h_vect[n] << "," << std::endl;
+        os << h_vect[n];
     }
+    os << " }";
     return os;
 }
 

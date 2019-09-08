@@ -4,3 +4,5 @@ Japan Toyota Green 1970 Sports N
 Japan Toyota Blue 1990 Economy P
 USA Chrysler Red 1980 Economy N
 Japan Honda White 1980 Economy P
+Japan Toyota Green 1980 Economy P
+Japan Honda Red 1990 Economy N
