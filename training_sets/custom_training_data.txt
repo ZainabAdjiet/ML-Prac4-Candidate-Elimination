@@ -1,0 +1,5 @@
+Origin Manufacturer Color Decade Type ExampleType
+Japan Honda Blue 1980 Sports P
+Japan Toyota Green 1970 Sports P
+Japan Chrysler Red 1980 Economy N
+USA Honda Blue 1990 Sports N

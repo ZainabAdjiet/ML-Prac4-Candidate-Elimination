@@ -19,7 +19,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CC) $(FLAGS) $(INCLUDE) -c -o $@ $<
 
 run:
-	./candidate_elimination training_set.txt
+	./candidate_elimination training_sets/custom_training_data.txt output.txt
 	
 clean:
 	rm -rf $(OBJ_DIR)/* candidate_elimination
