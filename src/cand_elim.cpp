@@ -41,9 +41,9 @@ bool hypothesis::operator==(const hypothesis & other) {
     return hypo == other.hypo;
 }
 
-bool hypothesis::operator%(const hypothesis & other) {
+bool hypothesis::operator%(const str_vect & other) {
     for (int i = 0; i < num_attributes; ++i) {
-        if (hypo[i] != other.hypo[i] && hypo[i] != "?" && other.hypo[i] != "?")
+        if (hypo[i] != other[i] && hypo[i] != "?" && other[i] != "?")
             return false;
     }
     return true;
@@ -52,13 +52,43 @@ bool hypothesis::operator%(const hypothesis & other) {
 bool hypothesis::operator>(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
-    return thisCount > otherCount;
+
+    if (thisCount == num_attributes || otherCount == num_attributes) {
+        return thisCount > otherCount;
+    }
+    else {
+        int matchingCols = 0;
+        for (int i = 0; i < num_attributes; ++i) {
+            if (hypo[i] != "?" && other.hypo[i] != "?") {
+                if (hypo[i] == other.hypo[i])
+                    ++matchingCols;
+                else
+                    return false;
+            }
+        }
+        return matchingCols > 0 && thisCount > otherCount;
+    }
 }
 
 bool hypothesis::operator<(const hypothesis & other) {
     int thisCount = std::count(hypo.begin(), hypo.end(), "?");
     int otherCount = std::count(other.hypo.begin(), other.hypo.end(), "?");
-    return thisCount < otherCount;
+
+    if (thisCount == num_attributes || otherCount == num_attributes) {
+        return thisCount < otherCount;
+    }
+    else {
+        int matchingCols = 0;
+        for (int i = 0; i < num_attributes; ++i) {
+            if (hypo[i] != "?" && other.hypo[i] != "?") {
+                if (hypo[i] == other.hypo[i])
+                    ++matchingCols;
+                else
+                    return false;
+            }
+        }
+        return matchingCols > 0 && thisCount < otherCount;
+    }
 }
 
 hypothesis hypothesis::min_generalise(const str_vect & d) {

@@ -46,45 +46,77 @@ void cand_elim::load_training_set(std::string filename) {
     }
 }
 
-bool cand_elim::valid_s(hypothesis & s) {
+bool cand_elim::more_spec_than_G(hypothesis & s) {
     for (int i = 0; i < G.size(); ++i) {
-        if (!(s % G[i]) && s > G[i]) {
-            return false;
+        if (!(s == G[i]) && s < G[i]) {
+            return true;
         }
     }
-    return true;
+    return false;
+}
+
+bool cand_elim::more_gen_than_S(hypothesis & g) {
+    for (int i = 0; i < S.size(); ++i) {
+        if (!(g == S[i]) && g > S[i]) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void cand_elim::positive_example(const str_vect & d) {
-    hypothesis h(d);
     for (hypothesis g : G) {
-        if (!(g % h)) {
+        if (!(g % d)) {
             auto it = std::find(G.begin(), G.end(), g);
             G.erase(it);
         }
     }
 
     for (hypothesis s : S) {
-        if (!(s % h)) {
+        if (!(s % d)) {
             auto it = std::find(S.begin(), S.end(), s);
             S.erase(it);
 
             hypothesis new_s = s.min_generalise(d);
-            if (valid_s(new_s)) {
+            if (new_s % d && more_spec_than_G(new_s))
                 S.push_back(new_s);
+        }
+    }
+
+    for (hypothesis s : S) {
+        if (more_gen_than_S(s)) {
+            auto it = std::find(S.begin(), S.end(), s);
+            S.erase(it);
+        }
+    }
+}
+
+void cand_elim::negative_example(const str_vect & d) {
+    for (hypothesis s : S) {
+        if (s % d) {
+            auto it = std::find(S.begin(), S.end(), s);
+            S.erase(it);
+        }
+    }
+
+    for (hypothesis g : G) {
+        if (g % d) {
+            auto it = std::find(G.begin(), G.end(), g);
+            G.erase(it);
+
+            vector<hypothesis> new_g = g.min_specialise(d);
+            for (int i = 0; i < new_g.size(); ++i) {
+                if (!(new_g[i] % d) && more_gen_than_S(new_g[i]))
+                    G.push_back(new_g[i]);
             }
         }
     }
 
-    int j = 0;
-    for (hypothesis s : S) {
-        for (int k = j+1; k < S.size(); ++k) {
-            if (s % S[k] && s > S[k]) {
-                auto it = std::find(S.begin(), S.end(), s);
-                S.erase(it);
-            }
+    for (hypothesis g : G) {
+        if (more_spec_than_G(g)) {
+            auto it = std::find(G.begin(), G.end(), g);
+            G.erase(it);
         }
-        ++j;
     }
 }
 
@@ -105,13 +137,15 @@ int main(int argc, char const *argv[]) {
         G.push_back(g);
 
         for (int i = 0; i < 2; ++i) {
-            if (training_set[i].result) {
+            cout << "iteration " << i << endl;
+            if (training_set[i].result)
                 positive_example(training_set[i].instance);
-            }
-        }
+            else 
+                negative_example(training_set[i].instance);
 
-        cout << S << endl;
-        cout << G << endl;
+            cout << S << endl;
+            cout << G << endl;
+        }
 
         // ofstream out_file("output.txt");
         // if (out_file.is_open()) {

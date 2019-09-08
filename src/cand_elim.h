@@ -28,7 +28,7 @@ namespace cand_elim {
         static void add_attribute_value(int index, std::string value);
         static std::string get_diff_attribute(int index, std::string value);
         bool operator==(const hypothesis & other);
-        bool operator%(const hypothesis & other);
+        bool operator%(const str_vect & other);
         bool operator>(const hypothesis & other);
         bool operator<(const hypothesis & other);
         hypothesis min_generalise(const str_vect & d);
@@ -44,8 +44,8 @@ namespace cand_elim {
     const int num_attributes = 5;
 
     void load_training_set(std::string filename);
-    bool valid_s(hypothesis & s);
-    bool valid_g(const hypothesis & g);
+    bool more_spec_than_G(hypothesis & s);
+    bool more_gen_than_S(hypothesis & g);
     void positive_example(const str_vect & d);
     void negative_example(const str_vect & d);
     std::ostream & operator<<(std::ostream & os, const str_vect & d);
